@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>画像リサイズアプリ</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>画像リサイズアプリ</h1>
+        <form method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="file">画像ファイル:</label>
+                <input type="file" name="file" id="file" accept="image/*" required>
+            </div>
+            <div class="form-group">
+                <label for="width">幅:</label>
+                <input type="number" name="width" id="width" required>
+            </div>
+            <div class="form-group">
+                <label for="height">高さ:</label>
+                <input type="number" name="height" id="height" required>
+            </div>
+            <button type="submit">リサイズ</button>
+        </form>
+    </div>
+</body>
+</html>
