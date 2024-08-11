@@ -30,7 +30,13 @@ poetry install
 
 ## Usage
 
-1. Run the application:
+1. set environment variables:
+
+```bash
+export SECRET_KEY=hoge
+```
+
+2. Run the application:
 
 ```bash
 python run.py

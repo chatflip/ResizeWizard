@@ -3,27 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>画像リサイズアプリ</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <title>ResizeWizard - 画像リサイズアプリ</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --background-color: #f0f4f8;
+            --text-color: #333;
+            --border-color: #d1d9e6;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        p {
+            text-align: center;
+            color: #666;
+            margin-bottom: 2rem;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+        }
+        input[type="file"] {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+        .resize-option {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
+        .resize-option input[type="radio"] {
+            margin-right: 1rem;
+        }
+        .resize-option label {
+            margin-right: 1rem;
+            min-width: 120px;
+            font-weight: bold;
+        }
+        .resize-option input[type="number"] {
+            width: 80px;
+            padding: 0.5rem;
+            margin-right: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #3a7bc8;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h1>画像リサイズアプリ</h1>
-        <form method="POST" enctype="multipart/form-data">
+        <h1>ResizeWizard</h1>
+        <p>簡単・便利な画像リサイズツール</p>
+        <form id="resize-form" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="file">画像ファイル:</label>
                 <input type="file" name="file" id="file" accept="image/*" required>
             </div>
-            <div class="form-group">
-                <label for="width">幅:</label>
-                <input type="number" name="width" id="width" required>
+            <div class="resize-option">
+                <input type="radio" id="pixel" name="resize_type" value="pixel" checked>
+                <label for="pixel">ピクセル指定:</label>
+                <input type="number" name="width" id="width" placeholder="幅 (px)">
+                <span>x</span>
+                <input type="number" name="height" id="height" placeholder="高さ (px)">
             </div>
-            <div class="form-group">
-                <label for="height">高さ:</label>
-                <input type="number" name="height" id="height" required>
+            <div class="resize-option">
+                <input type="radio" id="scale" name="resize_type" value="scale">
+                <label for="scale">倍率指定:</label>
+                <input type="number" name="scale_x" id="scale_x" step="0.1" min="0.1" placeholder="横の倍率">
+                <span>x</span>
+                <input type="number" name="scale_y" id="scale_y" step="0.1" min="0.1" placeholder="縦の倍率">
             </div>
             <button type="submit">リサイズ</button>
         </form>
     </div>
+    <script>
+        const fileInput = document.getElementById('file');
+        const widthInput = document.getElementById('width');
+        const heightInput = document.getElementById('height');
+        const scaleXInput = document.getElementById('scale_x');
+        const scaleYInput = document.getElementById('scale_y');
+        const resizeTypeInputs = document.getElementsByName('resize_type');
+
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                fetch('/get_image_size', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    widthInput.value = data.width;
+                    heightInput.value = data.height;
+                    scaleXInput.value = '1.0';
+                    scaleYInput.value = '1.0';
+                })
+                .catch(error => console.error('Error:', error));
+            }
+        });
+
+        resizeTypeInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                if (this.value === 'pixel') {
+                    widthInput.disabled = false;
+                    heightInput.disabled = false;
+                    scaleXInput.disabled = true;
+                    scaleYInput.disabled = true;
+                } else {
+                    widthInput.disabled = true;
+                    heightInput.disabled = true;
+                    scaleXInput.disabled = false;
+                    scaleYInput.disabled = false;
+                }
+            });
+        });
+
+        document.getElementById('resize-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            fetch('/resize', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.blob())
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = 'resized_image.png';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    </script>
 </body>
 </html>
